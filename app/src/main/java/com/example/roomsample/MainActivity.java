@@ -6,6 +6,7 @@ import androidx.fragment.app.DialogFragment;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 
@@ -55,8 +56,15 @@ public class MainActivity extends AppCompatActivity implements AddFlashcardDialo
         FlashCardEntity flashcard = new FlashCardEntity();
         flashcard.setFront(front);
         flashcard.setBack(back);
-        // TODO figure out async task to add to database
-        datasource.createFlashcard(flashcard);
+        // do concurrent thread and add the card in
+        // you need threads to do actions on database
+        Thread addingThread = new Thread(() -> datasource.createFlashcard(flashcard));
+        addingThread.start();
+        try {
+            addingThread.join();
+        } catch (Exception e) {
+            Log.d("MAIN","Exception thrown for thread");
+        }
     }
 
     @Override
