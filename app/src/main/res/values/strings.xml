@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">RoomSample</string>
+    <string name="add">ADD</string>
+    <string name="id_element_name">ID</string>
+    <string name="front">FRONT</string>
+    <string name="back">BACK</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="front_text">Front Text</string>
+    <string name="back_text">Back Text</string>
+    <string name="dialog_message">Create a FlashCard</string>
+    <string name="dialog_positive">Add</string>
+    <string name="dialog_negative">Cancel</string>
 </resources>

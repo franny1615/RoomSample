@@ -10,7 +10,7 @@ import androidx.room.PrimaryKey;
  * use @Ignore to tell Room that you don't want that field to go into database
  * */
 
-@Entity
+@Entity(tableName = "flashcard_table")
 public class FlashCardEntity {
 
     @PrimaryKey(autoGenerate = true)
@@ -21,6 +21,33 @@ public class FlashCardEntity {
     private String front;
     private String back;
 
+    // START FRONT methods
+    public String getFront() {
+        return front;
+    }
 
+    public void setFront(String front) {
+        this.front = front;
+    }
+    // END FRONT methods
 
+    // START BACK methods
+    public String getBack() {
+        return back;
+    }
+
+    public void setBack(String back) {
+        this.back = back;
+    }
+    // END BACK methods
+
+    // START ID methods
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+    // END ID
 }
