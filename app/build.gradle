@@ -55,4 +55,7 @@ dependencies {
 
     // to see database on phone
     debugImplementation 'im.dino:dbinspector:3.4.1@aar'
+
+    // recycler view dependencies
+    implementation 'androidx.recyclerview:recyclerview:1.1.0'
 }

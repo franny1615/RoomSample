@@ -3,6 +3,8 @@ package com.example.roomsample;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.DialogFragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.Dialog;
 import android.content.DialogInterface;
@@ -14,6 +16,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.roomsample.DataSource.FlashCardDataSource;
 import com.example.roomsample.Entities.FlashCardEntity;
@@ -25,11 +28,12 @@ import java.util.Objects;
 
 import io.reactivex.Flowable;
 
-public class MainActivity extends AppCompatActivity implements AddFlashcardDialogFragment.AddFlashcardDialogListener {
+public class MainActivity extends AppCompatActivity implements AddFlashcardDialogFragment.AddFlashcardDialogListener, FlashCardAdapter.ItemClickListener {
 
-    private Flowable<List<FlashCardEntity>> flashcards;
+    private List<FlashCardEntity> flashcards;
     private FlashCardDataSource datasource;
-    private LinearLayout flashcardLinearLayout;
+    private RecyclerView recyclerViewLayout;
+    private FlashCardAdapter fcAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,11 +42,19 @@ public class MainActivity extends AppCompatActivity implements AddFlashcardDialo
 
         // create our db connection and grab our cards
         datasource = new FlashCardDataSource(this);
-        flashcards = datasource.getAllFlashCard();
+        flashcards = datasource.getAllFlashCard().blockingFirst();
 
-        // will place flashcards in this layout
-        flashcardLinearLayout = findViewById(R.id.flashcardLinearLayout);
-        displayFlashcards(0,null);
+        // stuff for recyclerview
+        recyclerViewLayout = findViewById(R.id.recyclerViewFC);
+        recyclerViewLayout.setLayoutManager(new LinearLayoutManager(this));
+        fcAdapter = new FlashCardAdapter(this, flashcards);
+        fcAdapter.setClickListener(this);
+        recyclerViewLayout.setAdapter(fcAdapter);
+    }
+
+    @Override
+    public void onItemClick(View view, int position) {
+        Toast.makeText(this, "You clicked " + fcAdapter.getItem(position) + " on row number " + position, Toast.LENGTH_SHORT).show();
     }
 
     /**
@@ -70,90 +82,21 @@ public class MainActivity extends AppCompatActivity implements AddFlashcardDialo
         flashcard.setBack(back);
         // do concurrent thread and add the card in
         // you need threads to do actions on database
-        Thread addingThread = new Thread(() -> datasource.createFlashcard(flashcard));
+        Thread addingThread = new Thread(() -> {
+            datasource.createFlashcard(flashcard); // this one adds to database
+            flashcards.add(flashcard); // this one adds to running version
+        });
         addingThread.start();
         try {
             addingThread.join();
         } catch (Exception e) {
             Log.d("MAIN","Exception thrown for thread");
         }
-        displayFlashcards(1,flashcard);
-        flashcardLinearLayout.invalidate();
+        fcAdapter.notifyDataSetChanged(); // this updates the recycler view
     }
 
     @Override
     public void onDialogNegativeClick(DialogFragment dialog) {
         dialog.getDialog().cancel();
-    }
-
-
-    /**
-     * this method creates a cardview for every flashcard
-     * and adds it to the linearlayout
-     * */
-    public void displayFlashcards(int type, FlashCardEntity f) {
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.width = LinearLayout.LayoutParams.MATCH_PARENT;
-        params.height = LinearLayout.LayoutParams.WRAP_CONTENT;
-        params.topMargin = 10;
-        params.bottomMargin = 10;
-        params.leftMargin = 10;
-        params.rightMargin = 10;
-        switch(type) {
-            case 0:
-                allcards(params);
-                break;
-            case 1:
-                onecard(params, f);
-                break;
-            default:
-                Log.d("DISPLAY CARD:", "not valid type");
-                break;
-        }
-
-    }
-
-    public void allcards(LinearLayout.LayoutParams params) {
-        for(FlashCardEntity flashcard: flashcards.blockingFirst()) {
-            CardView fc = new CardView(this);
-            fc.setLayoutParams(params);
-            fc.setCardElevation(5f);
-            fc.setRadius(5f);
-            //
-            LinearLayout ln = new LinearLayout(this);
-            ln.setOrientation(LinearLayout.VERTICAL);
-            //
-            TextView front = new TextView(this);
-            front.setText("Front: " + flashcard.getFront());
-            TextView back = new TextView(this);
-            back.setText("Back: " + flashcard.getBack());
-            //
-            ln.addView(front);
-            ln.addView(back);
-            fc.addView(ln);
-            //
-            flashcardLinearLayout.addView(fc);
-        }
-    }
-
-    public void onecard(LinearLayout.LayoutParams params, FlashCardEntity flashcard) {
-        CardView fc = new CardView(this);
-        fc.setLayoutParams(params);
-        fc.setCardElevation(5f);
-        fc.setRadius(5f);
-        //
-        LinearLayout ln = new LinearLayout(this);
-        ln.setOrientation(LinearLayout.VERTICAL);
-        //
-        TextView front = new TextView(this);
-        front.setText("Front: " + flashcard.getFront());
-        TextView back = new TextView(this);
-        back.setText("Back: " + flashcard.getBack());
-        //
-        ln.addView(front);
-        ln.addView(back);
-        fc.addView(ln);
-        //
-        flashcardLinearLayout.addView(fc);
     }
 }
