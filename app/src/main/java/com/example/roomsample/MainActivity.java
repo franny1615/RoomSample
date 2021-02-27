@@ -1,34 +1,27 @@
 package com.example.roomsample;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
 import androidx.fragment.app.DialogFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.app.Dialog;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.roomsample.DataSource.FlashCardDataSource;
+import com.example.roomsample.Dialogs.AddFlashcardDialogFragment;
+import com.example.roomsample.Dialogs.EditFlashCardDialogFragment;
+import com.example.roomsample.Dialogs.OptionsDialogFragment;
 import com.example.roomsample.Entities.FlashCardEntity;
 
-import org.w3c.dom.Text;
-
 import java.util.List;
-import java.util.Objects;
 
-import io.reactivex.Flowable;
-
-public class MainActivity extends AppCompatActivity implements AddFlashcardDialogFragment.AddFlashcardDialogListener, FlashCardAdapter.ItemClickListener {
+public class MainActivity extends AppCompatActivity implements
+        AddFlashcardDialogFragment.AddFlashcardDialogListener,
+        FlashCardAdapter.ItemClickListener,
+        OptionsDialogFragment.OptionsInterfaceListener,
+        EditFlashCardDialogFragment.EditFlashcardListener {
 
     private List<FlashCardEntity> flashcards;
     private FlashCardDataSource datasource;
@@ -52,13 +45,17 @@ public class MainActivity extends AppCompatActivity implements AddFlashcardDialo
         recyclerViewLayout.setAdapter(fcAdapter);
     }
 
+    /**
+     * this is a recyclerview method that listens for an item being clicked in the list
+     * */
     @Override
     public void onItemClick(View view, int position) {
-        Toast.makeText(this, "You clicked " + fcAdapter.getItem(position) + " on row number " + position, Toast.LENGTH_SHORT).show();
+        OptionsDialogFragment options = new OptionsDialogFragment(position);
+        options.show(getSupportFragmentManager(),"OPTIONS FOR FLASHCARD");
     }
 
     /**
-     * this method acts as a gateway to methods that correspond with a particular
+     * this method acts as a gateway to methods that correspond with a particular button
      * */
     public void onClick(View view) {
         if(view.getId() == R.id.addButton) {
@@ -74,6 +71,9 @@ public class MainActivity extends AppCompatActivity implements AddFlashcardDialo
         dialog.show(getSupportFragmentManager(), "ADD FLASHCARD");
     }
 
+    /**
+     * this method corresponds to adding a flashcard dialog
+     * */
     @Override
     public void onDialogPositiveClick(DialogFragment dialog, String front, String back) {
         // take inputs and create a flashcard, add it to database
@@ -90,9 +90,43 @@ public class MainActivity extends AppCompatActivity implements AddFlashcardDialo
         try {
             addingThread.join();
         } catch (Exception e) {
-            Log.d("MAIN","Exception thrown for thread");
+            Log.d("MAIN","Exception thrown for thread add");
         }
         fcAdapter.notifyDataSetChanged(); // this updates the recycler view
+    }
+
+    @Override
+    public void deleteResponse(DialogFragment dialog, int id) {
+        // so find a way to connect the two to make deletion easier, same thing with editing
+        FlashCardEntity fc = flashcards.remove(id);
+        Thread removingThread = new Thread(() -> datasource.deleteFlashcard(fc));
+        removingThread.start();
+        try {
+            removingThread.join();
+        } catch (Exception e) {
+            Log.d("MAIN", "Exception thrown for thread in delete");
+        }
+        fcAdapter.notifyDataSetChanged(); // update recycler view
+    }
+
+    @Override
+    public void editResponse(DialogFragment dialog, int id) {
+        EditFlashCardDialogFragment editDialog = new EditFlashCardDialogFragment(id);
+        editDialog.show(getSupportFragmentManager(),"Edit Dialog");
+    }
+
+    @Override
+    public void onDialogSubmitEdit(DialogFragment dialog, String front, String back, int id) {
+        flashcards.get(id).setFront(front);
+        flashcards.get(id).setBack(back);
+        Thread updateThread = new Thread(()-> datasource.updateFlashcard(flashcards.get(id)));
+        updateThread.start();
+        try {
+            updateThread.join();
+        } catch (Exception e) {
+            Log.d("MAIN", "Exception thrown for thread in delete");
+        }
+        fcAdapter.notifyDataSetChanged(); // update recycler view
     }
 
     @Override

@@ -1,15 +1,16 @@
-package com.example.roomsample;
+package com.example.roomsample.Dialogs;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 
 import androidx.fragment.app.DialogFragment;
+
+import com.example.roomsample.R;
 
 public class AddFlashcardDialogFragment extends DialogFragment {
 
@@ -34,7 +35,7 @@ public class AddFlashcardDialogFragment extends DialogFragment {
         builder.setView(mView)
                 .setPositiveButton(R.string.dialog_positive, (dialog, id) -> {
                     // Send the positive button event back to the host activity
-                    listener.onDialogPositiveClick(AddFlashcardDialogFragment.this,front.getText().toString(),back.getText().toString());
+                    listener.onDialogPositiveClick(AddFlashcardDialogFragment.this, front.getText().toString(), back.getText().toString());
                 })
                 .setNegativeButton(R.string.dialog_negative, (dialog, id) -> {
                     // Send the negative button event back to the host activity
